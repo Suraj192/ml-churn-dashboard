@@ -4,7 +4,7 @@ import joblib
 from sklearn.preprocessing import LabelEncoder
 
 # load trained model
-model = joblib.load("models/churn_model.pk1")
+model = joblib.load("models/churn_model.pkl")
 
 # loading dataset
 data = pd.read_csv("data/churn.csv")
@@ -17,7 +17,6 @@ data = data.dropna()
 # Title
 st.title("Customer Churn Prediction Dashboard")
 
-st.write("Enter customer details below:")
 
 # creating input fields 
 input_data = {}
@@ -30,13 +29,6 @@ for column in data.drop("Churn", axis=1).columns:
 
 #converting input to dataframe
 input_df = pd.DataFrame([input_data])
-
-# encoding categorical columns
-for column in input_df.columns:
-    if data[column].dtype == "object":
-        encoder = LabelEncoder()
-        encoder.fit(data[column])
-        input_df[column] = encoder.transform(input_df[column])
 
 
 # Predict button

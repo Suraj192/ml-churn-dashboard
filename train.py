@@ -1,8 +1,10 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
 import joblib
 
 
@@ -11,53 +13,50 @@ def load_data(path):
     return data
 
 
-def preprocess_data(data):
-    # Dropping customer ID
-    data= data.drop("customerID", axis=1)
+def main():
+    data = load_data("data/churn.csv")
 
-    # converting TotalCharges column to numeric
+    data = data.drop("customerID", axis=1)
     data["TotalCharges"] = pd.to_numeric(data["TotalCharges"], errors="coerce")
     data = data.dropna()
 
-    # encoding categorical columns
-    for column in data.select_dtypes(include = ["object"]).columns:
-        encoder = LabelEncoder()
-        data[column] = encoder.fit_transform(data[column])
-
     X = data.drop("Churn", axis=1)
-    y= data["Churn"]
+    y = data["Churn"]
 
-    return X, y
+    categorical_cols = X.select_dtypes(include=["object"]).columns
+    numeric_cols = X.select_dtypes(exclude=["object"]).columns
 
-
-def train_model(X_train, y_train):
-    model = RandomForestClassifier(
-        n_estimators = 200,
-        random_state = 42,
-        n_jobs = -1
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols),
+            ("num", "passthrough", numeric_cols),
+        ]
     )
-    model.fit(X_train, y_train)
-    return model
 
-def main():
-    data = load_data("data/churn.csv")
-    X, y = preprocess_data(data)
+    model = RandomForestClassifier(
+        n_estimators=300,
+        random_state=42,
+        n_jobs=-1
+    )
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    pipeline = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            ("classifier", model),
+        ]
+    )
 
-    model = train_model(X_train, y_train)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
 
-    #Saving model
-    joblib.dump(model, "models/churn_model.pk1")
+    pipeline.fit(X_train, y_train)
 
-    y_pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-
+    accuracy = pipeline.score(X_test, y_test)
     print("Model Accuracy:", accuracy)
-    print("Model saved as models/churn_model.pk1")
 
-    
-
+    joblib.dump(pipeline, "models/churn_model.pkl")
+    print("Pipeline model saved.")
 
 
 
