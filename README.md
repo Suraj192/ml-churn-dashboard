@@ -6,7 +6,7 @@ An end-to-end Machine Learning project that predicts telecom customer churn and 
 
 ## 🚀 Live Demo
 
-(Deployment link will be added here after publishing)
+https://ml-churn-dashboard-dhvoymoqtmxymcwmweaulr.streamlit.app/
 
 ---
 
